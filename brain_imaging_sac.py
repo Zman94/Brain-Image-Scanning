@@ -3,6 +3,7 @@ import sys
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.neural_network import MLPClassifier
+from sklearn.model_selection import train_test_split
 
 def main():
     ### Loading Data ###
@@ -15,17 +16,47 @@ def main():
     print("train_Y shape =", train_Y.shape)
     print("train_X shape =", train_X.shape)
     print("test_X shape =", test_X.shape)
+    print(train_X.shape)
+    # train_X_2d = []
+    # for i in range(len(train_X)):
+        # train_X_2d.append([])
+        # for j in range(len(train_X[i])):
+            # for k in range(len(train_X[i][j])):
+                # train_X_2d[i] += list(train_X[i][j][k])
+    # for i in range(len(train_X_2d)):
+        # train_X_2d[i] = np.array(train_X_2d[i])
+    # train_X_2d = np.array(train_X_2d)
+    # print(train_X_2d.shape)
+    # print(train_X)
+    # print(train_X_2d)
+
+    train_X_2d = train_X.reshape((len(train_X), \
+               len(train_X[0])*len(train_X[0][0])*len(train_X[0][0][0])))
+    return
+
+
 
     ### Scale Data ###
-    scaler = StandardScaler()
-    scaler.fit(train_X)
-    train_X = scaler.transform(train_X)
-    test_X = scaler.transform(test_X)
+    # x_1_mean = np.mean(train_X, axis=1)
+    # x_2_mean = np.mean(train_X, axis=2)
+    # x_3_mean = np.mean(train_X, axis=3)
+    # train_X = scaler.transform(train_X)
+    # test_X = scaler.transform(test_X)
+
+    ### Train Test Split ###
+    x_train, x_test, y_train, y_test = train_test_split(train_X, train_Y, test_size = .25)
 
     ### Train Classifier ###
-    classifier = sklearn.neural_network.MLPClassifier()
-    classifier.fit(train_X, train_Y)
-    classifier.predict(test_X)
+    mlp = MLPClassifier()
+    mlp.fit(x_train, y_train)
+    predictions = mlp.predict(x_test)
+    print(sklearn.metrics.accuracy_score(y_test, predictions))
+    # print(predictions)
+
+    # mlp = MLPClassifier()
+    # mlp.fit(train_X, train_Y)
+    # predictions = mlp.predict(test_X)
+    # print(predictions)
 
 
 if __name__ == "__main__":
