@@ -1,4 +1,5 @@
-import pdb
+import time
+# import pdb
 import sys
 import numpy as np
 from sklearn.preprocessing import StandardScaler
@@ -24,6 +25,7 @@ def manual_reshape(train_X):
         train_X_2d[i] = np.array(train_X_2d[i])
     train_X_2d = np.array(train_X_2d)
 
+### 46% ###
 def vanilla_nn(train_X, train_Y, test_X):
     mlp = MLPClassifier()
     mlp.fit(train_X, train_Y)
@@ -54,15 +56,23 @@ def main():
     # vanilla_nn(train_X_2d, train_Y, test_X)
 
     ### Train Classifier (train/test) ###
-    mlp = MLPClassifier()
-    mlp.fit(x_train, y_train)
-    predictions = mlp.predict(x_test)
-    print(accuracy_score(y_test, predictions))
-    print(confusion_matrix(y_test, predictions))
-    print(classification_report(y_test, predictions))
+    predictions = []
+    for i in range(len(y_train[0])):
+        mlp = MLPClassifier()
+        mlp.fit(x_train, y_train[:, i])
+        predictions.append(mlp.predict(x_test))
+        # print("----", tag_name[i] + ",", i, "----")
+        # print(accuracy_score(y_test[:, i], predictions))
+
+    np_predict = np.column_stack((np.array(i) for i in predictions))
+    print(accuracy_score(y_test, np_predict))
+
+    # print(classification_report(y_test, predictions))
     # print(predictions)
 
 if __name__ == "__main__":
     # pdb.set_trace()
+    start_time = time.time()
     main()
-    # print("--- %s seconds ---" % (time.time() - start_time))
+    print("--- {0} minutes {1} seconds ---".format( \
+       int((time.time() - start_time)/60), int((time.time() - start_time)%60)))
