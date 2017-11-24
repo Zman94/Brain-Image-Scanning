@@ -61,8 +61,8 @@ def main():
         mlp = MLPClassifier()
         mlp.fit(x_train, y_train[:, i])
         predictions.append(mlp.predict(x_test))
-        # print("----", tag_name[i] + ",", i, "----")
-        # print(accuracy_score(y_test[:, i], predictions))
+        print("----", tag_name[i] + ",", i, "----")
+        print(accuracy_score(y_test[:, i], predictions[i]))
 
     np_predict = np.column_stack((np.array(i) for i in predictions))
     print(accuracy_score(y_test, np_predict))
