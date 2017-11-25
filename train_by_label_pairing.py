@@ -44,20 +44,30 @@ print len(myDict.keys())
 myClassifiers = []
 for k in myDict.keys():
 	myListP = myDict[k]
-	myListN = []
+	noOverlap = []
+	someOverlap = []
 	classes = k.split(',')
 	
 	for otherKeys in myDict.keys():
-		addToNeg = True
+		if otherKeys == k:
+			continue
+		noOverlapFlag = True
 		for c in classes:
 			if c in otherKeys:
-				addToNeg = False
+				noOverlapFlag = False
 				break
-		if addToNeg:
-			myListN += myDict[otherKeys]
-	positiveSamples = [random.choice(myListP) for _ in range(2000)]
-	negativeSamples = [random.choice(myListN) for _ in range(2000)]
-
+		if noOverlapFlag:
+			noOverlap += myDict[otherKeys]
+		else:
+			someOverlap += myDict[otherKeys]
+	positiveSamples = [random.choice(myListP) for _ in range(3000)]
+	# negativeSamples = [random.choice(noOverlap) for _ in range(2000)]
+	negativeSamples = []
+	for i in range(3000):
+		if i < 2000:
+			negativeSamples.append(random.choice(noOverlap))
+		else:
+			negativeSamples.append(random.choice(someOverlap))
 	myX = []
 	myY = []
 	for p in positiveSamples:
