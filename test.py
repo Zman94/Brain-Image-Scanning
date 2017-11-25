@@ -44,7 +44,7 @@ def normalizeData(train_X, train_Y):
 
 def main():
 	tag_name, train_Y, train_X, test_X = load()
-	train_X = normalizeData(train_X, train_Y)
+
 	x_train, x_test, y_train, y_test = train_test_split(train_X, train_Y, test_size = .2)
 	#https://stackoverflow.com/questions/42699956/3d-convolutional-neural-network-input-shape
 	img_rows = 26
@@ -62,22 +62,25 @@ def main():
 	    test_X = test_X.reshape(test_X.shape[0], img_rows, img_cols, img_depth, 1)
 	    input_shape = (img_rows, img_cols, img_depth, 1)
 
+	x_train = x_train.astype('float32')
+	x_test = x_test.astype('float32')
+	x_train /= 255
+	x_test /= 255
+
 	#adapted from: https://github.com/MinhazPalasara/keras/blob/master/examples/shapes_3d_cnn.py
-	filters = [16,32]
-	kernel = [(7,7,7),(3,3,3)]
-	pool = [3,3]
+	filters = [32,32]
+	kernel = [(3,3,3),(3,3,3)]
+	pool = [2,2]
 
 	model = Sequential()
-	model.add(Conv3D(filters[0],kernel[0], input_shape=input_shape,  padding='valid', activation="relu"))
+	model.add(Conv3D(filters[0],kernel[0], input_shape=input_shape, activation="relu"))
+	model.add(Conv3D(filters[1],kernel[1], activation="relu"))
 	model.add(MaxPooling3D(pool_size=(pool[0], pool[0], pool[0])))
-	model.add(Dropout(0.5))
-	model.add(Conv3D(filters[1],kernel[1],  padding='valid', activation="relu"))
-	model.add(MaxPooling3D(pool_size=(pool[1], pool[1], pool[1])))
+	model.add(Dropout(0.25))
 	model.add(Flatten())
-	model.add(Dropout(0.5))
-	model.add(Dense(64, activation="relu"))
-	model.add(Dense(19, kernel_initializer='normal'))
-	model.add(Activation("sigmoid"))
+	model.add(Dense(128, activation="relu"))
+	model.add(Dropout(0.25))
+	model.add(Dense(19, kernel_initializer='normal', activation="sigmoid"))
 
 	# Optimize with SGD
 	rms = RMSprop(lr=0.1, rho=0.9, epsilon=1e-08, decay=0)
@@ -96,7 +99,7 @@ def main():
 	for i in range(len(counts)):
 		avg = total/19.0
 		classWeights[i] = avg/counts[i]
-	model.fit(x_train, y_train, epochs=2, batch_size=64, validation_data=(x_test, y_test), class_weight=classWeights)
+	model.fit(x_train, y_train, epochs=2, batch_size=500, validation_data=(x_test, y_test), class_weight=classWeights)
 	print("training completed")
 
 	print("saving model")
