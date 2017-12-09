@@ -1,4 +1,3 @@
-
 from keras.models import Sequential
 from keras.layers import Conv3D
 from keras.layers.convolutional import MaxPooling3D
@@ -49,17 +48,15 @@ def modifiedSampling(train_X, train_Y):
 		for j in range(len(train_Y[i])):
 			if train_Y[i][j] == 1:
 				key += str(j)+","
-				counts[j]+=1
 		key = key[:len(key)-1]
 		if key not in myDict:
 			myDict[key] = []
 		myDict[key].append(train_X[i])
 	retX = []
 	retY = []
-	i = 0
 	for k in myDict.keys():
-		# numSamples = int(50*portion[i])
 		numSamples = 250
+		# numSamples = int(50*portion[i])
 		newSamples = [random.choice(myDict[k]) for _ in range(numSamples)]
 		retX += newSamples
 		nums = k.split(',')
@@ -68,8 +65,7 @@ def modifiedSampling(train_X, train_Y):
 			hot_vector[int(n)] = 1
 		for _ in range(numSamples):
 			retY.append(hot_vector)
-		i+=1
-
+	print len(retY)
 	retX = np.array(retX)
 	retY = np.array(retY)
 	return retX, retY
@@ -79,8 +75,8 @@ def main():
 	tag_name, train_Y, train_X, test_X = load()
 
 	#normalize training data
-	# train_X = normalizeData(train_X)
-	# test_X = normalizeData(test_X)
+	train_X = normalizeData(train_X)
+	test_X = normalizeData(test_X)
 
 	# #sample 200 from each label pairing	
 	# modified_X, modified_Y = modifiedSampling(train_X, train_Y)
@@ -95,24 +91,26 @@ def main():
 	img_cols = x_train.shape[2]
 	img_depth = x_train.shape[3]
 	x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, img_depth, 1)
+	train_X = train_X.reshape(train_X.shape[0], img_rows, img_cols, img_depth, 1)
 	x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, img_depth, 1)
 	test_X = test_X.reshape(test_X.shape[0], img_rows, img_cols, img_depth, 1)
 	input_shape = (img_rows, img_cols, img_depth, 1)
 
 	#adapted from: https://github.com/MinhazPalasara/keras/blob/master/examples/shapes_3d_cnn.py
-	filters = [32,64]
-	kernel = [(7,7,7), (3,3,3)]
-	pool = [3,3]
+	filters = [19,19,16]
+	kernel = [(3,4,3), (2,3,2), (3,3,3)]
+	pool = [2,2]
 
 	model = Sequential()
 	model.add(Conv3D(filters[0],kernel[0], input_shape=input_shape, activation="relu"))
 	model.add(Conv3D(filters[1],kernel[1], activation="relu"))
 	model.add(MaxPooling3D(pool_size=(pool[0], pool[0], pool[0])))
+	# model.add(Dropout(0.25)) 
+	# model.add(Conv3D(filters[2],kernel[2], activation="relu"))
 	# model.add(MaxPooling3D(pool_size=(pool[1], pool[1], pool[1])))
+	# model.add(Dropout(0.25))
 	model.add(Flatten())
-	model.add(Dropout(.25))
-	# model.add(Dense(512, activation="relu"))
-	model.add(Dense(128, activation="relu"))
+	model.add(Dense(128, activation="relu", kernel_initializer='random_uniform'))
 	model.add(Dense(19, kernel_initializer='normal', activation="sigmoid"))
 
 	# Optimize with SGD
@@ -133,8 +131,8 @@ def main():
 	for i in range(len(counts)):
 		avg = total/19.0
 		classWeights[i] = avg/counts[i]
-	# print classWeights
-	model.fit(x_train, y_train, epochs=3, batch_size=32, validation_data=(x_test, y_test), class_weight=classWeights)
+	print classWeights
+	model.fit(x_train, y_train, epochs=5, batch_size=32, validation_data=(x_test,y_test), class_weight=classWeights)
 	print("training completed")
 
 	print("saving model")
@@ -154,7 +152,7 @@ def main():
 	print('Test accuracy:', score[1])
 
 	pred = model.predict(test_X)
-	print pred
+	print pred[0]
 	for i in range(len(pred)):
 		for j in range(len(pred[i])):
 			if pred[i][j] >=.5:
