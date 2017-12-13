@@ -63,7 +63,14 @@ def main():
     scaler.fit(train_X_2d)
     train_X_2d = scaler.transform(train_X_2d)
 
-    ### Generate Labels ###
+    ### Train/Test Split ###
+    # x_train, x_test, y_train, y_test = train_test_split(train_X_2d, trainY, test_size = .25)
+    x_train = train_X_2d
+    x_test = test_X_2d
+    total_labels = 0
+
+    ### Generate Labels and Label Counts ###
+    label_counts = {}
     trainY_temp = np.empty((len(trainY)), dtype=object)
     for i, label in enumerate(trainY):
         temp_str = ""
@@ -72,23 +79,36 @@ def main():
                 temp_str += (str(j)+",")
         temp_str = temp_str[:-1]
         trainY_temp[i] = temp_str
-
-    ### Train/Test Split ###
-    x_train, x_test, y_train, y_test = train_test_split(train_X_2d[:250], trainY[:250], test_size = .25)
-    # x_train = train_X_2d
-    # y_train = trainY
-    # x_test = test_X_2d
-
+        if trainY_temp[i] not in label_counts:
+            total_labels += 1
+            label_counts[trainY_temp[i]] = 1
+        else:
+            label_counts[trainY_temp[i]] += 1
+    y_train = trainY_temp
 
     ### Train Classifier ###
-    # vanilla_nn(train_X_2d, trainY, testX)
+    # vanilla_nn(train_X_2d, y_train, testX)
 
     ### Train Classifier (train/test) ###
     predictions = []
+    priors = {}
     mlp = MLPClassifier(hidden_layer_sizes=(500, 50))
     mlp.fit(x_train, y_train)
-    predictions = mlp.predict(x_test)
+    print("Trained")
+    print("--- {0} minutes {1} seconds ---".format( \
+       int((time.time() - STARTTIME)/60), int((time.time() - STARTTIME)%60)))
+    # predictions = mlp.predict(x_test)
     predictions_proba = mlp.predict_log_proba(x_test)
+    for label, count in label_counts.items():
+        priors[label] = np.log(1-(1-float(count)/float(len(y_train)))/20.0)
+
+    for i, out in enumerate(predictions_proba):
+        for j, _ in enumerate(out):
+            predictions_proba[i][j] += priors[y_train[j]]
+
+    for i in predictions_proba:
+        predictions.append(np.argmax(i))
+
     # for i in range(len(y_train[0])):
         # mlp = MLPClassifier(hidden_layer_sizes=(1500, 50))
         # mlp.fit(x_train, y_train[:, i])
@@ -99,17 +119,27 @@ def main():
     # np_predict = np.column_stack((np.array(i) for i in predictions))
     # print()
 
-    # retVal = ''
-    # for count, p in enumerate(np_predict):
-        # retVal += ','.join(str(x) for x in p)
-        # retVal = str(count)+','+retVal
-        # print(retVal)
-        # retVal = ''
 
-    print(accuracy_score(y_test, predictions))
-    print(classification_report(y_test, predictions))
-    print(predictions)
-    print(predictions_proba)
+    ### Re-format predictions ###
+    for i, val in enumerate(predictions):
+        cur_predict = y_train[i].split(',')
+        temp = [0]*total_labels
+        for j in cur_predict:
+            temp[int(j)] = 1
+        predictions[i] = temp
+
+    predictions = np.array(predictions)
+    # print(accuracy_score(y_test, predictions))
+
+    retVal = ''
+    for count, p in enumerate(predictions):
+        retVal += ','.join(str(x) for x in p)
+        retVal = str(count)+','+retVal
+        print(retVal)
+        retVal = ''
+    # print(classification_report(y_test, predictions))
+    # print(predictions)
+    # print(predictions_proba)
 
 if __name__ == "__main__":
     # pdb.set_trace()
